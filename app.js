@@ -7,21 +7,35 @@ function sessionState(){const p=etParts(),mins=+p.hour*60 + +p.minute,day=p.week
 function renderSessions(){const s=sessionState();$("sessions").innerHTML=s.map(x=>`<div class="session"><div><strong>${x.n}</strong><small>${x.range}</small></div><span class="state ${x.open?"open":"closed"}">${x.open?"● OPEN":"○ CLOSED"}</span></div>`).join("");$("marketSummary").textContent=s.filter(x=>x.open).map(x=>x.n).join(" + ")||"Major sessions closed";}
 function fmt(n,d=5){return Number.isFinite(n)?n.toFixed(d):"—";}
 function trend(candles){if(!candles||candles.length<55)return {name:"INSUFFICIENT DATA",cls:"neutral"};let c=candles.map(x=>+x.close).reverse(),ema=(arr,p)=>{let k=2/(p+1),v=arr.slice(0,p).reduce((a,b)=>a+b,0)/p;for(let i=p;i<arr.length;i++)v=arr[i]*k+v*(1-k);return v};let e20=ema(c,20),e50=ema(c,50),last=c.at(-1),prior=c.at(-6);let slope=last-prior;if(last>e20&&e20>e50&&slope>0)return{name:"BULLISH",cls:"bull"};if(last<e20&&e20<e50&&slope<0)return{name:"BEARISH",cls:"bear"};return{name:"MIXED / RANGE",cls:"neutral"};}
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function fetchBatch(interval){
  const symbols=PAIRS.map(p=>p.api).join(",");
  const params=new URLSearchParams({symbol:symbols,interval,outputsize:"100",timezone:"America/New_York",apikey:key});
- const r=await fetch(`https://api.twelvedata.com/time_series?${params.toString()}`);
- if(!r.ok)throw Error(`HTTP ${r.status}`);
- const j=await r.json();
- const out={};
- for(const p of PAIRS){
-   let item=j[p.api] || j[p.symbol] || null;
-   if(!item && j.meta && j.values && PAIRS.length===1)item=j;
-   if(item && item.status==="error")throw Error(`${p.symbol}: ${item.message||"API error"}`);
-   if(!item || !Array.isArray(item.values))throw Error(`${p.symbol}: no candle data returned`);
-   out[p.symbol]=item.values;
+ for(let attempt=0;attempt<3;attempt++){
+   const r=await fetch(`https://api.twelvedata.com/time_series?${params.toString()}`);
+   if(r.status===429 && attempt<2){
+     $("connection").textContent=`RATE LIMIT · WAITING TO RETRY (${attempt+1}/2)`;
+     await sleep(62000);
+     continue;
+   }
+   if(!r.ok)throw Error(`HTTP ${r.status}`);
+   const j=await r.json();
+   if(j.status==="error" && (j.code===429 || /limit|credit/i.test(j.message||"")) && attempt<2){
+     $("connection").textContent=`RATE LIMIT · WAITING TO RETRY (${attempt+1}/2)`;
+     await sleep(62000);
+     continue;
+   }
+   const out={};
+   for(const p of PAIRS){
+     let item=j[p.api] || j[p.symbol] || null;
+     if(!item && j.meta && j.values && PAIRS.length===1)item=j;
+     if(item && item.status==="error")throw Error(`${p.symbol}: ${item.message||"API error"}`);
+     if(!item || !Array.isArray(item.values))throw Error(`${p.symbol}: no candle data returned`);
+     out[p.symbol]=item.values;
+   }
+   return out;
  }
- return out;
+ throw Error("HTTP 429: credit limit still reached after waiting. Try again after the next minute or check your plan quota.");
 }
 function buildSetup(pair,frames){let h=frames["1h"],m=frames["15min"],f=frames["5min"];let th=trend(h),tm=trend(m),tf=trend(f);let aligned=th.cls===tm.cls&&["bull","bear"].includes(th.cls);if(!aligned)return {status:"NO TRADE",text:"1H and 15M are not aligned. Wait for directional agreement.",cls:"neutral"};let bull=th.cls==="bull",last=+f[0].close,atrRange=f.slice(0,14).reduce((s,x)=>s+(+x.high-+x.low),0)/14;let entry=last,stop=bull?last-atrRange*1.5:last+atrRange*1.5,target1=bull?last+atrRange*1.5:last-atrRange*1.5,target2=bull?last+atrRange*3:last-atrRange*3;return {status:`CONDITIONAL ${bull?"LONG":"SHORT"}`,cls:bull?"bull":"bear",text:"1H and 15M trend agree. Wait for a 5M pullback/reclaim (long) or rally/rejection (short); do not chase the current candle.",entry,stop,target1,target2,tf};}
 function render(){let cards=[],levels=[],setups=[],warnings=[];for(let p of PAIRS){let d=data[p.symbol];if(!d)continue;let last=+d["5min"][0].close,day=d["1day"],prev=day[1]||day[0],hi=+prev.high,lo=+prev.low,mid=(hi+lo)/2;let tfs=TF.map(([id,label])=>{let t=trend(d[id]);return `<div class="tf"><b>${label}</b><small class="${t.cls}">${t.name==="BULLISH"?"▲ BULL":t.name==="BEARISH"?"▼ BEAR":"MIXED"}</small></div>`}).join("");let overall=trend(d["1h"]);cards.push(`<article class="pair-card"><div class="pair-top"><span class="pair-name">${p.symbol}</span><span class="badge ${overall.cls}">${overall.name}</span></div><div class="price">${fmt(last,p.digits)}</div><div class="change">Latest 5-minute close · ${d["5min"][0].datetime||""}</div><div class="tf-row">${tfs}</div></article>`);levels.push(`<tr><td><b>${p.symbol}</b></td><td>${fmt(hi,p.digits)}</td><td>${fmt(lo,p.digits)}</td><td>${fmt(mid,p.digits)}</td><td>${fmt(last,p.digits)}</td></tr>`);let s=buildSetup(p,d);setups.push(`<div class="setup"><div class="setup-head"><b>${p.symbol}</b><span class="badge ${s.cls}">${s.status}</span></div><p>${s.text}</p>${s.entry?`<div class="setup-grid"><div><small>REFERENCE ENTRY*</small><b>${fmt(s.entry,p.digits)}</b></div><div><small>STOP REFERENCE</small><b>${fmt(s.stop,p.digits)}</b></div><div><small>TARGET 1</small><b>${fmt(s.target1,p.digits)}</b></div><div><small>TARGET 2</small><b>${fmt(s.target2,p.digits)}</b></div><div><small>R:R TO T2</small><b>1:2</b></div><div><small>CONFIRMATION</small><b>5M trigger</b></div></div><p>*Illustrative volatility-based reference only. Confirm structure, spread and risk before entry.</p>`:""}</div>`);if(s.status==="NO TRADE")warnings.push(`<div class="warning-item"><b>${p.symbol}:</b> No directional alignment — stand aside.</div>`);else warnings.push(`<div class="warning-item"><b>${p.symbol}:</b> ${s.status} condition; wait for 5M confirmation.</div>`);}
@@ -30,7 +44,10 @@ async function refresh(){
  if(!key){$("connection").textContent="API KEY REQUIRED";$("connection").className="pill warn";return;}
  $("refresh").disabled=true;$("refresh").textContent="Loading…";$("connection").textContent="FETCHING BATCH DATA";$("connection").className="pill warn";
  let errors=[],fresh={};
- for(const [interval] of TF){
+ let intervalIndex=0;
+ for(const [interval,label] of TF){
+   intervalIndex++;
+   $("connection").textContent=`LOADING ${label} · ${intervalIndex}/5`;
    try{
      const batch=await fetchBatch(interval);
      for(const p of PAIRS){fresh[p.symbol] ||= {};fresh[p.symbol][interval]=batch[p.symbol];}

@@ -31,3 +31,7 @@ The app requests all three symbols together in one API call per interval (five b
 
 ## Batch requests
 The dashboard sends one `/time_series` request per timeframe using the comma-separated symbol parameter: `EUR/USD,USD/JPY,USD/CAD`. This reduces the request count from 15 pair/timeframe calls to 5 timeframe calls. Twelve Data may still charge credits per symbol, and actual credit usage depends on the user's plan/provider rules.
+
+
+## Rate-limit handling (v1.2)
+If Twelve Data returns HTTP 429, the dashboard waits 62 seconds and retries the affected timeframe (up to two retries). On the Basic plan, the five timeframe batches use 15 credits total (3 symbols per interval), so a complete refresh can span more than one minute. Batch requests reduce HTTP request count, not per-symbol credit usage.

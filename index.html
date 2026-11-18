@@ -45,7 +45,7 @@
   <div class="panel-head"><div><p class="eyebrow">SYSTEM CONFIGURATION</p><h2>Market data connection</h2></div><span class="pill warn" id="keyStatus">API KEY REQUIRED</span></div>
   <p class="muted">This version uses Twelve Data for FX candles. Create an API key at <a href="https://twelvedata.com/" target="_blank" rel="noopener">Twelve Data</a>, then enter it below. The key is stored only in this browser. For a public website, use a server-side proxy (such as a Cloudflare Worker) rather than exposing a paid API key in client code.</p>
   <div class="keyrow"><input id="apiKey" type="password" autocomplete="off" placeholder="Enter Twelve Data API key"><button id="saveKey" class="primary">Save key</button><button id="forgetKey" class="ghost">Forget key</button></div>
-  <p class="small muted">Refresh requests daily, 4-hour, 1-hour, 15-minute and 5-minute candles for EUR/USD, USD/JPY and USD/CAD. API plan limits may restrict how often all timeframes can refresh.</p>
+  <p class="small muted">Refresh requests daily, 4-hour, 1-hour, 15-minute and 5-minute candles for EUR/USD, USD/JPY and USD/CAD. On lower API-credit plans, refresh may pause and retry automatically when the per-minute quota is reached.</p>
   <div class="footerline"><span>FOREX COMMAND · Independent trading tool</span><span>Analysis is informational, not financial advice.</span></div>
  </section>
 </main>
