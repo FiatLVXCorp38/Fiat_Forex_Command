@@ -35,3 +35,7 @@ The dashboard sends one `/time_series` request per timeframe using the comma-sep
 
 ## Rate-limit handling (v1.2)
 If Twelve Data returns HTTP 429, the dashboard waits 62 seconds and retries the affected timeframe (up to two retries). On the Basic plan, the five timeframe batches use 15 credits total (3 symbols per interval), so a complete refresh can span more than one minute. Batch requests reduce HTTP request count, not per-symbol credit usage.
+
+
+## v1.3 batch response validation
+The batch parser explicitly reads each symbol-keyed result (EUR/USD, USD/JPY, USD/CAD), handles supported response wrappers, and reports provider error codes/messages. Each timeframe is one multi-symbol request. The app requests 60 candles per interval, enough for the EMA50 trend calculation with a small buffer. HTTP 429 is retried after a 62-second wait, up to two retries; exhausted daily credits cannot be bypassed by the app.
