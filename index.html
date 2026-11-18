@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1422"><title>Forex Command | Market Intelligence</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+ <div class="brand"><div class="mark">FC</div><div><strong>FOREX COMMAND</strong><small>MARKET INTELLIGENCE CENTER</small></div></div>
+ <div class="topright"><span id="connection" class="pill warn">DATA NOT CONNECTED</span><span id="clock">--:--:-- ET</span><button id="refresh" class="primary">↻ Refresh</button></div>
+</header>
+<main>
+ <section class="hero">
+  <div><p class="eyebrow">DAILY MARKET BRIEF · NEW YORK TIME</p><h1>Trading Situational Awareness</h1><p class="muted">Three pairs. Multiple timeframes. Clear levels. Conditional trade plans.</p></div>
+  <div class="hero-meta"><span class="muted">LAST UPDATED</span><strong id="updated">Not yet updated</strong><span id="marketSummary">Checking market sessions…</span></div>
+ </section>
+ <section class="session-strip" id="sessions"></section>
+ <section class="section-head"><div><p class="eyebrow">01 / TREND SCANNER</p><h2>Pair intelligence</h2></div><span class="muted">Trend model: EMA 20 / EMA 50 + slope</span></section>
+ <section id="pairs" class="pair-grid"></section>
+ <section class="two-col">
+  <div class="panel">
+   <div class="panel-head"><div><p class="eyebrow">02 / PRICE STRUCTURE</p><h2>Yesterday's levels</h2></div><span class="muted">Previous completed daily candle</span></div>
+   <div class="table-wrap"><table><thead><tr><th>PAIR</th><th>YESTERDAY HIGH</th><th>YESTERDAY LOW</th><th>MIDPOINT</th><th>LAST PRICE</th></tr></thead><tbody id="levels"><tr><td colspan="5" class="empty">Connect market data to load levels.</td></tr></tbody></table></div>
+  </div>
+  <div class="panel">
+   <div class="panel-head"><div><p class="eyebrow">03 / TRADE INTELLIGENCE</p><h2>Conditional setups</h2></div><span class="muted">Not automatic orders</span></div>
+   <div id="setups"><p class="empty">Trade plans appear after live data loads.</p></div>
+  </div>
+ </section>
+ <section class="two-col">
+  <div class="panel">
+   <div class="panel-head"><div><p class="eyebrow">04 / ECONOMIC THREAT BOARD</p><h2>Today's news risk</h2></div><a href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener">Open calendar ↗</a></div>
+   <p class="muted">Check release times and actual/forecast values before trading. Calendar data is not currently embedded; use the linked live calendar until a calendar data provider is configured.</p>
+   <div class="news-note"><strong>Pre-trade rule</strong><span>Do not open a new position immediately ahead of high-impact releases affecting USD, EUR, JPY or CAD. Reassess spreads and volatility after the release.</span></div>
+  </div>
+  <div class="panel">
+   <div class="panel-head"><div><p class="eyebrow">05 / MISSION CONTROL</p><h2>Market conditions</h2></div></div>
+   <div id="warnings"><p class="empty">Waiting for market data.</p></div>
+   <div class="rules"><strong>Execution doctrine</strong><ul><li>Weekly and daily establish the major context.</li><li>4H and 1H determine directional alignment.</li><li>15M develops the setup; 5M is for entry confirmation.</li><li>If structure conflicts or price is choppy: NO TRADE.</li></ul></div>
+  </div>
+ </section>
+ <section class="panel settings">
+  <div class="panel-head"><div><p class="eyebrow">SYSTEM CONFIGURATION</p><h2>Market data connection</h2></div><span class="pill warn" id="keyStatus">API KEY REQUIRED</span></div>
+  <p class="muted">This version uses Twelve Data for FX candles. Create an API key at <a href="https://twelvedata.com/" target="_blank" rel="noopener">Twelve Data</a>, then enter it below. The key is stored only in this browser. For a public website, use a server-side proxy (such as a Cloudflare Worker) rather than exposing a paid API key in client code.</p>
+  <div class="keyrow"><input id="apiKey" type="password" autocomplete="off" placeholder="Enter Twelve Data API key"><button id="saveKey" class="primary">Save key</button><button id="forgetKey" class="ghost">Forget key</button></div>
+  <p class="small muted">Refresh requests daily, 4-hour, 1-hour, 15-minute and 5-minute candles for EUR/USD, USD/JPY and USD/CAD. API plan limits may restrict how often all timeframes can refresh.</p>
+  <div class="footerline"><span>FOREX COMMAND · Independent trading tool</span><span>Analysis is informational, not financial advice.</span></div>
+ </section>
+</main>
+<script src="app.js"></script>
+</body></html>
